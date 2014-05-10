@@ -13,9 +13,12 @@ setup_params = dict(
         'lmdb',
         'kafka-python',
         'requests',
+        'msgpack-python',
     ],
     entry_points={
-        'console_scripts': []
+        'console_scripts': [
+            'iwadbd = iwadb.server:run',
+        ]
     },
     description='A silly database!',
     long_description=open('README.rst').read(),
