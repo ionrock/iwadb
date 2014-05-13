@@ -19,9 +19,13 @@ class WriterProcess(Process):
         client = KafkaClient(self.kafka_host)
         consumer = SimpleConsumer(client,
                                   config.KAFKA_GROUP_ID,
-                                  config.KAFKA_TOPIC_ID)
+                                  config.KAFKA_TOPIC)
 
         for resp in consumer:
+            if not resp.message.value:
+                continue
+
             with env.begin(write=True) as txn:
                 message = IWAMessage.loads(resp.message.value)
+                print(message)
                 txn.put(message.key, message.value)
