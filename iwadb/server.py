@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import logging
 
 import cherrypy
@@ -35,6 +37,7 @@ class KafkaClientPlugin(cherrypy.process.plugins.SimplePlugin):
         self.client = KafkaClient(config.KAFKA_HOST)
         self.producer = SimpleProducer(self.client)
         self.writer = WriterProcess(config.KAFKA_HOST)
+        self.writer.start()
         self.bus.subscribe('dbwrite', self.dbwrite)
 
     def stop(self):
@@ -45,6 +48,7 @@ class KafkaClientPlugin(cherrypy.process.plugins.SimplePlugin):
         message = IWAMessage(key, value)
         self.producer.send_messages(config.KAFKA_TOPIC,
                                     message.dumps())
+        cherrypy.log('Queued: %s => %s' % (message.key, message.value))
 
 
 def run():
