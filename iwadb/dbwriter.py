@@ -14,12 +14,19 @@ class WriterProcess(Process):
         self.kafka_host = kafka_host or config.KAFKA_HOST
         super(WriterProcess, self).__init__()
 
+    def consumer(self, client):
+        while True:
+            try:
+                return SimpleConsumer(client,
+                                      config.KAFKA_GROUP_ID,
+                                      config.KAFKA_TOPIC)
+            except KeyError:
+                pass
+
     def run(self):
         env = getdb()
         client = KafkaClient(self.kafka_host)
-        consumer = SimpleConsumer(client,
-                                  config.KAFKA_GROUP_ID,
-                                  config.KAFKA_TOPIC)
+        consumer = self.consumer(client)
 
         for resp in consumer:
             if not resp.message.value:
@@ -27,5 +34,6 @@ class WriterProcess(Process):
 
             with env.begin(write=True) as txn:
                 message = IWAMessage.loads(resp.message.value)
-                print(message)
-                txn.put(message.key, message.value)
+                if message:
+                    txn.put(bytes(message.key), bytes(message.value))
+                    # print('Wrote: %s : %s' % (message.key, message.value))
